@@ -1,0 +1,34 @@
+@import "vars";
+@import "antd";
+
+html, body, #root {
+  width:100%;
+  height:100%;
+  margin:0;
+}
+
+.app-container, .page {
+  width:100%;
+  height:100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-line {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 20px;
+}
+
+.page-title {
+  color:@c2;
+  font-size: @fs4;
+}
+
+.page-error-tip {
+  position:absolute !important;
+  padding-right:40px !important;
+  top:10px;
+}

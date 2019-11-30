@@ -1,0 +1,15 @@
+export default {
+  PH_LookingServer: "正在自动搜索可用的服务...",
+  PH_InputServer: "请手工输入服务地址",
+  B_ConnectServer: "使用该服务",
+  INP_NoServer: "没有可用的服务，你可以尝试手工输入服务器IP",
+  T_ServerConnectFail: "服务连接失败，请重试或输入新的地址",
+  HD_ServerConfig: "配置服务地址",
+  L_UserName: "帐号：",
+  PH_UserName: "输入用户名",
+  L_Password: "密码：",
+  PH_Password: "输入密码",
+  B_Login: "登录",
+  HD_Login: "帐号登录",
+  T_InvalidAccount: "用户名或密码格式不正确",
+}
