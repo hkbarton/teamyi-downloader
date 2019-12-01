@@ -1,34 +1,45 @@
-import React, { useState, useEffect, useRef, useCallback } from "react"
+import React, { useState, useCallback } from "react"
 import cls from "classnames"
 import { Alert, Input, Button } from "antd"
 import msg from "messages"
+import { login } from "renderer/api"
 
 import "renderer/styles/Login.less"
 
-export default function (props) {
+export default function(props) {
   const [userName, setUserName] = useState("")
   const [pass, setPass] = useState("")
   const [errMessage, setErrMessage] = useState(null)
   const [isLogingIn, setIsLogingIn] = useState(false)
 
-  const handleInputUserName = e => {
+  const handleInputUserName = (e) => {
     setUserName(e.target.value)
   }
-  const handleInputPassword = e => {
+  const handleInputPassword = (e) => {
     setPass(e.target.value)
   }
-  const handleLogin = useCallback(e => {
-    setIsLogingIn(true)
-    const name = userName.trim()
-    const pw = pass.trim()
-    // validate
-    if (!name || !pw) {
-      setErrMessage(msg.T_InvalidAccount)
-      return
-    }
-
-    setIsLogingIn(false)
-  }, [userName, pass])
+  const handleLogin = useCallback(
+    async (e) => {
+      setIsLogingIn(true)
+      const name = userName.trim()
+      const pw = pass.trim()
+      // validate
+      if (!name || !pw) {
+        setIsLogingIn(false)
+        setErrMessage(msg.T_InvalidAccount)
+        return
+      }
+      /* eslint-disable no-unused-vars */
+      const [_, err] = await login(name, pw)
+      setIsLogingIn(false)
+      if (err) {
+        setErrMessage(err.message)
+      } else {
+        props.successState()
+      }
+    },
+    [userName, pass],
+  )
 
   return (
     <div className={cls("page", "login")}>

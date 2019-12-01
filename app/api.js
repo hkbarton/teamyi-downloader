@@ -1,34 +1,42 @@
 import fetch from "node-fetch"
 import { ApolloClient } from "apollo-client"
 import { InMemoryCache } from "apollo-cache-inmemory"
-import { ApolloLink } from 'apollo-link'
 import { HttpLink } from "apollo-link-http"
 import gql from "graphql-tag"
 import { getConfig, setConfig } from "config"
-import errors, { getErrorByCode } from "errors"
-// electron or nodejs module, exclued in bundle
-import { ipcRenderer } from "electron"
+import errors, { getError } from "errors"
+// electron or nodejs module, exclued in bundle if used in renderer
 import dgram from "dgram"
 import { Buffer } from "buffer"
 
 let client
 
+/*
 const sessionLink = new ApolloLink((operation, forward) => {
-  return forward(operation).map(res => {
-    const { response: { headers } } = operation.getContext()
-    console.log(headers)
+  return forward(operation).map((res) => {
+    const {
+      response: { headers },
+    } = operation.getContext()
+    const cookie = headers.get("set-cookie")
+    if (cookie) {
+      const sidMatch = cookie.match(/sid=([^;]+);/)
+      if (sidMatch && sidMatch.length > 1) {
+        res.data = { ...res.data, sessionID: sidMatch[1] }
+      }
+    }
     return res
   })
 })
+*/
 
 function createClient(server) {
   client = null
   const cache = new InMemoryCache()
   const port = process.env.NODE_ENV === "development" ? 9000 : ""
-  const link = sessionLink.concat(new HttpLink({
+  const link = new HttpLink({
     uri: `${server}:${port}/graphql`,
     fetch,
-  }))
+  })
   client = new ApolloClient({
     cache,
     link,
@@ -68,30 +76,23 @@ async function execute(apiFn) {
   }
 }
 
-async function gqlQuery(gql, context) {
-  return await execute(async () => {
-    await assureClient()
-    const sid = await ipcRenderer.invoke("getSavedSessionID")
-    const headers = {}
-    if (sid) {
-      headers.Cookie = `sid=${sid}`
-    }
-    const ctx = Object.assign({ headers }, context)
-    return await client.query({
-      query: gql,
-      context: ctx,
-    })
-  })
+async function gqlQuery(query, options) {
+  await assureClient()
+  return await execute(async () => await client.query({ ...options, query }))
+}
+
+async function gqlMutate(mutation, options) {
+  await assureClient()
+  return await execute(
+    async () => await client.mutate({ ...options, mutation }),
+  )
 }
 
 export function apiResult(apiResult) {
   let result, error
   if (apiResult && apiResult.type === "api_result") {
-    if (apiResult.err) {
-      const code = apiResult.err.message
-      error = getErrorByCode(code)
-    }
     result = apiResult.data
+    error = getError(apiResult.err)
   }
   return [result, error]
 }
@@ -138,6 +139,9 @@ export async function getCurrentUser() {
         }
       }
     `,
+    {
+      fetchPolicy: "network-only",
+    },
   )
 }
 
@@ -147,6 +151,18 @@ export async function getDeployInfo() {
       query {
         deployInfo {
           initialized
+        }
+      }
+    `,
+  )
+}
+
+export async function login(user, pass) {
+  return await gqlMutate(
+    gql`
+      mutation {
+        login(user:"${user}", password:"${pass}") {
+          id
         }
       }
     `,

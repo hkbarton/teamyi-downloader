@@ -1,14 +1,22 @@
 import { app, BrowserWindow } from "electron"
-import initCredentialManager from "main/credential-mgr"
+import initNodeAPI from "main/node-api"
 
 let win
 
-initCredentialManager()
+initNodeAPI()
 
 function createMainWindow() {
+  let winWidth = 1000
+  let winHeight = 600
+
+  if (process.env.NODE_ENV === "development") {
+    winWidth = 1300
+    winHeight = 1000
+  }
+
   win = new BrowserWindow({
-    width: 1000,
-    height: 600,
+    width: winWidth,
+    height: winHeight,
     webPreferences: {
       nodeIntegration: true,
     },

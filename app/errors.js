@@ -1,3 +1,5 @@
+import { ApolloError } from "apollo-client"
+
 const errors = {
   ErrorNoServerFound: {
     code: "err_no_server_found",
@@ -9,13 +11,20 @@ const errors = {
   },
 }
 
-export function getErrorByCode(code) {
+export function getError(err) {
+  if (!err) {
+    return null
+  }
+  const code = err.message
   for (let value of Object.values(errors)) {
     if (value.code === code) {
       return value
     }
   }
-  return null
+  return {
+    code: err instanceof ApolloError ? "gql_error" : "other_err",
+    message: err.message.replace("GraphQL error:", "").trim(),
+  }
 }
 
 export default errors
