@@ -77,15 +77,17 @@ async function execute(apiFn) {
 }
 
 async function gqlQuery(query, options) {
-  await assureClient()
-  return await execute(async () => await client.query({ ...options, query }))
+  return await execute(async () => {
+    await assureClient()
+    return await client.query({ ...options, query })
+  })
 }
 
 async function gqlMutate(mutation, options) {
-  await assureClient()
-  return await execute(
-    async () => await client.mutate({ ...options, mutation }),
-  )
+  return await execute(async () => {
+    await assureClient()
+    return await client.mutate({ ...options, mutation })
+  })
 }
 
 export function apiResult(apiResult) {
