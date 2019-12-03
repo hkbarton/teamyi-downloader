@@ -1,0 +1,104 @@
+.main {
+  flex-direction: row;
+
+  .m-left,.m-right{
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .m-left {
+    width: 40%;
+    background-color: #eee;
+    padding: 20px;
+    overflow-y:scroll;
+  }
+
+  .m-right {
+    flex-grow: 1;
+    justify-content: center;
+  }
+}
+
+.m-c-queries {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 10px 20px 10px;
+}
+
+.m-queries {
+  margin-left:10px !important;
+  flex-grow: 1;
+}
+
+.m-c-query{
+  flex-grow: 1;
+  display:flex;
+  flex-direction: column;
+
+  .ant-card-body {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+}
+
+.m-c-query-conditions {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+
+  p {
+    color:#aaa;
+    margin:0px;
+    padding-left:5px;
+  }
+}
+
+.m-dividen {
+  margin-top:5px !important;
+  margin-bottom: 10px !important;
+}
+
+.m-c-metadata {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  align-items: center;
+  margin-bottom: 20px;
+  padding:5px;
+}
+
+.m-metadata {
+  margin-left:20px !important;
+  flex-grow: 1;
+}
+
+.m-c-condition-editor {
+  flex-grow: 1;
+  padding:5px;
+  display:flex;
+  flex-direction: column;
+}
+
+.m-c-condition-editor-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.m-c-query-actions {
+  height: 50px;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.m-action-button {
+  margin-left:10px;
+}

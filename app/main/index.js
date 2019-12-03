@@ -6,8 +6,8 @@ let win
 initNodeAPI()
 
 function createMainWindow() {
-  let winWidth = 1000
-  let winHeight = 600
+  let winWidth = 1220
+  let winHeight = 800
 
   if (process.env.NODE_ENV === "development") {
     winWidth = 1300

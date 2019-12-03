@@ -12,4 +12,9 @@ export default {
   B_Login: "登录",
   HD_Login: "帐号登录",
   T_InvalidAccount: "用户名或密码格式不正确",
+  L_SelectSavedQuery: "选择或新建一个查询：",
+  B_SaveQuery: "保存查询",
+  B_RunQuery: "执行查询",
+  L_ConditionEditor: "设置查询条件",
+  L_ChooseMetadata: "元数据模板：",
 }
