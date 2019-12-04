@@ -17,4 +17,6 @@ export default {
   B_RunQuery: "执行查询",
   L_ConditionEditor: "设置查询条件",
   L_ChooseMetadata: "元数据模板：",
+  L_NoMDTemplate: "无可用的模板",
+  L_NewQuery: "创建新查询",
 }

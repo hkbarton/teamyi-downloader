@@ -1,6 +1,6 @@
 import { ipcMain } from "electron"
 import keytar from "keytar"
-import { apiResult, login as loginAPI } from "api"
+import { apiResult, login as loginAPI, getEnterprises } from "api"
 import { setConfig } from "config"
 
 const SERVICE_NAME = "teamyi-downloader"
@@ -12,12 +12,28 @@ async function clearCredentials() {
       await keytar.deletePassword(SERVICE_NAME, account)
     })
   }
+  await setConfig({ user: null, primaryEnt: null })
 }
 
 export async function login(user, pass) {
   const [result, err] = apiResult(await loginAPI(user, pass))
   if (result && result.login) {
-    await setConfig("user", user)
+    const persistConfig = { user }
+    const [entsResult] = apiResult(
+      await getEnterprises({
+        headers: {
+          cookie: `sid=${result.sessionID}`,
+        },
+      }),
+    )
+    if (
+      entsResult &&
+      entsResult.enterprises &&
+      entsResult.enterprises.length > 0
+    ) {
+      persistConfig.primaryEnt = entsResult.enterprises[0].key
+    }
+    await setConfig(persistConfig)
     await keytar.setPassword(SERVICE_NAME, user, pass)
   }
   return [result, err]

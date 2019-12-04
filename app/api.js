@@ -1,5 +1,6 @@
 import fetch from "node-fetch"
 import { ApolloClient } from "apollo-client"
+import { ApolloLink } from "apollo-link"
 import { InMemoryCache } from "apollo-cache-inmemory"
 import { HttpLink } from "apollo-link-http"
 import gql from "graphql-tag"
@@ -11,7 +12,6 @@ import { Buffer } from "buffer"
 
 let client
 
-/*
 const sessionLink = new ApolloLink((operation, forward) => {
   return forward(operation).map((res) => {
     const {
@@ -27,16 +27,17 @@ const sessionLink = new ApolloLink((operation, forward) => {
     return res
   })
 })
-*/
 
 function createClient(server) {
   client = null
   const cache = new InMemoryCache()
   const port = process.env.NODE_ENV === "development" ? 9000 : ""
-  const link = new HttpLink({
-    uri: `${server}:${port}/graphql`,
-    fetch,
-  })
+  const link = sessionLink.concat(
+    new HttpLink({
+      uri: `${server}:${port}/graphql`,
+      fetch,
+    }),
+  )
   client = new ApolloClient({
     cache,
     link,
@@ -117,22 +118,28 @@ export async function autoDiscoveryServer() {
         client.on("message", handleMessage)
         client.send(Buffer.from("ping"), 19613)
       }),
-    true,
   )
 }
 
 export async function setServerAddress(protocol, server) {
   const serverAddress = `${protocol}${server}`
-  await setConfig("server", serverAddress)
+  await setConfig({ server: serverAddress })
   createClient(serverAddress)
 }
 
 export async function resetServerAddress() {
-  await setConfig("server", null)
+  await setConfig({ server: null })
   client = null
 }
 
-export async function getCurrentUser() {
+export async function getQueryProfiles() {
+  return execute(async () => {
+    const profiles = await getConfig("profiles")
+    return profiles || []
+  })
+}
+
+export async function getCurrentUser(context) {
   return await gqlQuery(
     gql`
       query {
@@ -143,11 +150,28 @@ export async function getCurrentUser() {
     `,
     {
       fetchPolicy: "network-only",
+      context,
     },
   )
 }
 
-export async function getDeployInfo() {
+export async function getEnterprises(context) {
+  return await gqlQuery(
+    gql`
+      query {
+        enterprises {
+          key
+        }
+      }
+    `,
+    {
+      fetchPolicy: "network-only",
+      context,
+    },
+  )
+}
+
+export async function getDeployInfo(context) {
   return await gqlQuery(
     gql`
       query {
@@ -156,10 +180,11 @@ export async function getDeployInfo() {
         }
       }
     `,
+    { context },
   )
 }
 
-export async function login(user, pass) {
+export async function login(user, pass, context) {
   return await gqlMutate(
     gql`
       mutation {
@@ -168,5 +193,26 @@ export async function login(user, pass) {
         }
       }
     `,
+    { context },
+  )
+}
+
+export async function getMDTemplates(context) {
+  const ent = await getConfig("primaryEnt")
+  return await gqlQuery(
+    gql`
+    query {
+      allMDTemplates(entKey:"${ent}"){
+        key,
+        name,
+        fields {
+            key,
+            name,
+            type
+          }
+        }
+      }
+    `,
+    { context },
   )
 }

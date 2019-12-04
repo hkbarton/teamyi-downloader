@@ -32,7 +32,7 @@ export async function getConfig(key) {
   return config[key]
 }
 
-export async function setConfig(key, value) {
-  config[key] = value
+export async function setConfig(fields) {
+  config = { ...config, ...fields }
   await saveConfig()
 }

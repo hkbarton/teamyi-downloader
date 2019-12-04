@@ -15,16 +15,18 @@ const AppState = {
   READY: 2,
 }
 
-export default function (props) {
+export default function(props) {
   const [appState, setAppState] = useState(AppState.INITING)
+  const [userID, setUserID] = useState(null)
   useEffect(() => {
-    ; (async function () {
+    ;(async function() {
       const [result, err] = apiResult(await getCurrentUser())
       if (err && err.code === errors.ErrorNoServerFound.code) {
         setAppState(AppState.NO_SERVER)
       } else if (!result || !result.currentUser) {
         setAppState(AppState.NO_USER)
       } else {
+        setUserID(result.currentUser.id)
         setAppState(AppState.READY)
       }
     })()
@@ -37,13 +39,9 @@ export default function (props) {
           <ServerDiscovery successState={() => setAppState(AppState.INITING)} />
         )
       case AppState.NO_USER:
-        return (
-          <Login successState={() => setAppState(AppState.INITING)} />
-        )
+        return <Login successState={() => setAppState(AppState.INITING)} />
       case AppState.READY:
-        return (
-          <Main />
-        )
+        return <Main userID={userID} />
       default:
         return <LoadingIndicator width={32} height={32} />
     }
