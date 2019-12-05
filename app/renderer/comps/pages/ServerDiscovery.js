@@ -19,13 +19,13 @@ function validateServer(server) {
   return /^[\d\w_-]+(\.[\d\w_-]+)*$/.test(server)
 }
 
-export default function (props) {
+export default function(props) {
   const serverIPRef = useRef(null)
   const [server, setServer] = useState(null)
   const [protocol, setProtocol] = useState(null)
   useEffect(() => {
     if (server === null) {
-      ; (async function () {
+      ;(async function() {
         setProtocol("http://")
         const [result] = apiResult(await autoDiscoveryServer())
         if (result && result.server) {

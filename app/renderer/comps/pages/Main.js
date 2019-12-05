@@ -3,6 +3,7 @@ import cls from "classnames"
 import { Alert, Card, Select, Button, Divider, Empty } from "antd"
 import { apiResult, getMDTemplates, getQueryProfiles } from "api"
 import msg from "messages"
+import QueryConditionRow from "renderer/comps/p/QueryConditionRow"
 
 import "renderer/styles/Main.less"
 
@@ -41,11 +42,12 @@ function useProfiles(userID, errSetter) {
     key: -1,
     name: msg.L_NewQuery,
     mdTemplate: null,
-    conditions: [],
+    conditions: [newCond()],
   }
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(false)
   const [profiles, setProfiles] = useState([defaultProfile])
   const [selectedProfile, setSelectedProfile] = useState(defaultProfile.key)
+  const [selectedMDTemp, setSelectedMDTemp] = useState(null)
 
   useEffect(() => {
     ;(async () => {
@@ -55,15 +57,94 @@ function useProfiles(userID, errSetter) {
         result.push(defaultProfile)
       }
       setProfiles(result)
+      const profile = result[0]
+      setSelectedProfile(profile.key)
+      setSelectedMDTemp(profile.mdTemplate)
       setIsLoadingProfiles(false)
     })()
   }, [userID])
 
-  return [isLoadingProfiles, profiles, selectedProfile, setSelectedProfile]
+  return [
+    isLoadingProfiles,
+    profiles,
+    setProfiles,
+    selectedProfile,
+    setSelectedProfile,
+    selectedMDTemp,
+    setSelectedMDTemp,
+  ]
 }
 
-function profileByKey(profiles, key) {
-  return profiles.find((profile) => profile.key === key)
+function valueByKey(entries, key) {
+  return entries.find((entry) => entry.key === key)
+}
+
+function newCond() {
+  return {
+    key: new Date().getTime(),
+    mdFieldKey: null,
+    op: null,
+    value: null,
+  }
+}
+
+function clearProfileCondition(profiles, which) {
+  const profile = valueByKey(profiles, which)
+  return [
+    ...profiles.filter((p) => p.key !== which),
+    {
+      ...profile,
+      conditions: [newCond()],
+    },
+  ]
+}
+
+function newProfileCondition(profiles, which) {
+  const profile = valueByKey(profiles, which)
+  const { conditions } = profile
+  return [
+    ...profiles.filter((p) => p.key !== which),
+    {
+      ...profile,
+      conditions: [...conditions, newCond()],
+    },
+  ]
+}
+
+function removeProfileCondition(profiles, which, conditionKey) {
+  const profile = valueByKey(profiles, which)
+  const { conditions } = profile
+  const newConditions = conditions.filter((cond) => cond.key !== conditionKey)
+  if (newConditions.length < 1) {
+    newConditions.push(newCond())
+  }
+  return [
+    ...profiles.filter((p) => p.key !== which),
+    {
+      ...profile,
+      conditions: newConditions,
+    },
+  ]
+}
+
+function updateProfileCondition(profiles, which, condition) {
+  const profile = valueByKey(profiles, which)
+  const { conditions } = profile
+  const newConditions = []
+  conditions.forEach((cond) => {
+    if (cond.key === condition.key) {
+      newConditions.push(condition)
+    } else {
+      newConditions.push(cond)
+    }
+  })
+  return [
+    ...profiles.filter((p) => p.key !== which),
+    {
+      ...profile,
+      conditions: newConditions,
+    },
+  ]
 }
 
 export default function(props) {
@@ -75,12 +156,34 @@ export default function(props) {
   const [
     isLoadingProfiles,
     profiles,
+    setProfiles,
     selectedProfile,
     setSelectedProfile,
+    selectedMDTemp,
+    setSelectedMDTemp,
   ] = useProfiles(props.userID, setErrMessage)
 
   const handleProfileSelection = (profileKey) => {
+    const selectedProfile = valueByKey(profiles, profileKey)
     setSelectedProfile(profileKey)
+    setSelectedMDTemp(selectedProfile.mdTemplate)
+  }
+
+  const handleMDTemplateSelection = (key) => {
+    setSelectedMDTemp(key)
+    setProfiles(clearProfileCondition(profiles, selectedProfile))
+  }
+
+  const handleConditionChange = (cond) => {
+    setProfiles(updateProfileCondition(profiles, selectedProfile, cond))
+  }
+
+  const handleConditionRemoval = (key) => {
+    setProfiles(removeProfileCondition(profiles, selectedProfile, key))
+  }
+
+  const handleConditionAdd = () => {
+    setProfiles(newProfileCondition(profiles, selectedProfile))
   }
 
   return (
@@ -111,16 +214,19 @@ export default function(props) {
             ))}
           </Select>
         </div>
-        <Card type="inner" className="m-c-query" title="placeholder">
+        <Card
+          type="inner"
+          className="m-c-query"
+          title={valueByKey(profiles, selectedProfile).name}
+        >
           <div className="m-c-query-conditions">
             <div className="m-c-metadata">
               <span>{msg.L_ChooseMetadata}</span>
               <Select
-                defaultValue={
-                  profileByKey(profiles, selectedProfile).mdTemplate
-                }
+                defaultValue={selectedMDTemp}
                 className="m-metadata"
                 loading={isLoadingMDTemplates}
+                onChange={handleMDTemplateSelection}
               >
                 {mdTemplates.map((template) => (
                   <Option key={template.key} value={template.key}>
@@ -132,41 +238,16 @@ export default function(props) {
             <p>{msg.L_ConditionEditor}</p>
             <Divider className="m-dividen" />
             <div className="m-c-condition-editor">
-              {/* dynamic generate condition */}
-              <div className="m-c-condition-editor-row">
-                <Select defaultValue="ph">
-                  <Option value="ph">Placeholder</Option>
-                </Select>
-                <Select defaultValue="ph">
-                  <Option value="ph">Placeholder</Option>
-                </Select>
-                <Select defaultValue="ph">
-                  <Option value="ph">Placeholder</Option>
-                </Select>
-              </div>
-              <div className="m-c-condition-editor-row">
-                <Select defaultValue="ph">
-                  <Option value="ph">Placeholder</Option>
-                </Select>
-                <Select defaultValue="ph">
-                  <Option value="ph">Placeholder</Option>
-                </Select>
-                <Select defaultValue="ph">
-                  <Option value="ph">Placeholder</Option>
-                </Select>
-              </div>
-              <div className="m-c-condition-editor-row">
-                <Select defaultValue="ph">
-                  <Option value="ph">Placeholder</Option>
-                </Select>
-                <Select defaultValue="ph">
-                  <Option value="ph">Placeholder</Option>
-                </Select>
-                <Select defaultValue="ph">
-                  <Option value="ph">Placeholder</Option>
-                </Select>
-                <Button icon="plus"></Button>
-              </div>
+              {valueByKey(profiles, selectedProfile).conditions.map((cond) => (
+                <QueryConditionRow
+                  key={cond.key}
+                  mdTemplate={valueByKey(mdTemplates, selectedMDTemp)}
+                  condition={cond}
+                  onChange={handleConditionChange}
+                  onRemove={handleConditionRemoval}
+                  onNew={handleConditionAdd}
+                />
+              ))}
             </div>
           </div>
           <div className="m-c-query-actions">

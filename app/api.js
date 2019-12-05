@@ -208,7 +208,8 @@ export async function getMDTemplates(context) {
         fields {
             key,
             name,
-            type
+            type,
+            typeData,
           }
         }
       }

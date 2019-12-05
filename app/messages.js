@@ -19,4 +19,13 @@ export default {
   L_ChooseMetadata: "元数据模板：",
   L_NoMDTemplate: "无可用的模板",
   L_NewQuery: "创建新查询",
+  OP_Equal: "等于",
+  OP_NotEqual: "不等于",
+  OP_Greater: "大于",
+  OP_GreaterEqual: "大于等于",
+  OP_Smaller: "小于",
+  OP_SmallerEqual: "小于等于",
+  OP_Include: "包含",
+  OP_NotInclude: "不包含",
+  PH_InputValue: "请输入值",
 }
