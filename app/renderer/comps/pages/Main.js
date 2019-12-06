@@ -1,7 +1,22 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import cls from "classnames"
-import { Alert, Card, Select, Button, Divider, Empty } from "antd"
-import { apiResult, getMDTemplates, getQueryProfiles } from "api"
+import {
+  Alert,
+  Card,
+  Select,
+  Button,
+  Divider,
+  Empty,
+  Modal,
+  Input,
+  Popconfirm,
+} from "antd"
+import {
+  apiResult,
+  getMDTemplates,
+  getQueryProfiles,
+  saveQueryProfiles,
+} from "api"
 import msg from "messages"
 import QueryConditionRow from "renderer/comps/p/QueryConditionRow"
 
@@ -38,27 +53,28 @@ function useMetadataTemplates(userID, errSetter) {
 }
 
 function useProfiles(userID, errSetter) {
-  const defaultProfile = {
-    key: -1,
-    name: msg.L_NewQuery,
-    mdTemplate: null,
-    conditions: [newCond()],
-  }
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(false)
-  const [profiles, setProfiles] = useState([defaultProfile])
-  const [selectedProfile, setSelectedProfile] = useState(defaultProfile.key)
+  const newProfile = newQueryProfile()
+  const [profiles, setProfiles] = useState([newProfile])
+  const [selectedProfile, setSelectedProfile] = useState(-1)
   const [selectedMDTemp, setSelectedMDTemp] = useState(null)
+  const [isSaveQueryModalVisible, setIsSaveQueryModalVisible] = useState(false)
+  const modalInputRef = useRef(null)
+  const [profileNameEditorValue, setProfileNameEditorValue] = useState(
+    newProfile.name,
+  )
 
   useEffect(() => {
     ;(async () => {
       setIsLoadingProfiles(true)
       const [result] = apiResult(await getQueryProfiles())
-      if (result.length < 1) {
-        result.push(defaultProfile)
+      if (result.length < 1 || result[result.length - 1].key !== -1) {
+        result.push(newQueryProfile())
       }
       setProfiles(result)
       const profile = result[0]
       setSelectedProfile(profile.key)
+      setProfileNameEditorValue(profile.name)
       setSelectedMDTemp(profile.mdTemplate)
       setIsLoadingProfiles(false)
     })()
@@ -72,11 +88,25 @@ function useProfiles(userID, errSetter) {
     setSelectedProfile,
     selectedMDTemp,
     setSelectedMDTemp,
+    isSaveQueryModalVisible,
+    setIsSaveQueryModalVisible,
+    modalInputRef,
+    profileNameEditorValue,
+    setProfileNameEditorValue,
   ]
 }
 
 function valueByKey(entries, key) {
   return entries.find((entry) => entry.key === key)
+}
+
+function newQueryProfile() {
+  return {
+    key: -1,
+    name: msg.L_NewQuery,
+    mdTemplate: null,
+    conditions: [newCond()],
+  }
 }
 
 function newCond() {
@@ -88,27 +118,32 @@ function newCond() {
   }
 }
 
-function clearProfileCondition(profiles, which) {
-  const profile = valueByKey(profiles, which)
-  return [
-    ...profiles.filter((p) => p.key !== which),
-    {
-      ...profile,
-      conditions: [newCond()],
-    },
-  ]
+function updateProfile(profiles, which, newProfileFields) {
+  const target = valueByKey(profiles, which)
+  const newProfiles = []
+  for (let profile of profiles) {
+    if (profile.key !== which) {
+      newProfiles.push(profile)
+    } else {
+      newProfiles.push({
+        ...target,
+        ...newProfileFields,
+      })
+    }
+  }
+  return newProfiles
+}
+
+function deleteProfile(profiles, which) {
+  return profiles.filter((p) => p.key !== which)
 }
 
 function newProfileCondition(profiles, which) {
   const profile = valueByKey(profiles, which)
   const { conditions } = profile
-  return [
-    ...profiles.filter((p) => p.key !== which),
-    {
-      ...profile,
-      conditions: [...conditions, newCond()],
-    },
-  ]
+  return updateProfile(profiles, which, {
+    conditions: [...conditions, newCond()],
+  })
 }
 
 function removeProfileCondition(profiles, which, conditionKey) {
@@ -118,13 +153,10 @@ function removeProfileCondition(profiles, which, conditionKey) {
   if (newConditions.length < 1) {
     newConditions.push(newCond())
   }
-  return [
-    ...profiles.filter((p) => p.key !== which),
-    {
-      ...profile,
-      conditions: newConditions,
-    },
-  ]
+  return updateProfile(profiles, which, {
+    ...profile,
+    conditions: newConditions,
+  })
 }
 
 function updateProfileCondition(profiles, which, condition) {
@@ -138,13 +170,10 @@ function updateProfileCondition(profiles, which, condition) {
       newConditions.push(cond)
     }
   })
-  return [
-    ...profiles.filter((p) => p.key !== which),
-    {
-      ...profile,
-      conditions: newConditions,
-    },
-  ]
+  return updateProfile(profiles, which, {
+    ...profile,
+    conditions: newConditions,
+  })
 }
 
 export default function(props) {
@@ -161,17 +190,29 @@ export default function(props) {
     setSelectedProfile,
     selectedMDTemp,
     setSelectedMDTemp,
+    isSaveQueryModalVisible,
+    setIsSaveQueryModalVisible,
+    modalInputRef,
+    profileNameEditorValue,
+    setProfileNameEditorValue,
   ] = useProfiles(props.userID, setErrMessage)
+  const selectedProfileObj = valueByKey(profiles, selectedProfile)
 
   const handleProfileSelection = (profileKey) => {
     const selectedProfile = valueByKey(profiles, profileKey)
     setSelectedProfile(profileKey)
     setSelectedMDTemp(selectedProfile.mdTemplate)
+    setProfileNameEditorValue(selectedProfile.name)
   }
 
   const handleMDTemplateSelection = (key) => {
     setSelectedMDTemp(key)
-    setProfiles(clearProfileCondition(profiles, selectedProfile))
+    setProfiles(
+      updateProfile(profiles, selectedProfile, {
+        mdTemplate: key,
+        conditions: [newCond()],
+      }),
+    )
   }
 
   const handleConditionChange = (cond) => {
@@ -184,6 +225,60 @@ export default function(props) {
 
   const handleConditionAdd = () => {
     setProfiles(newProfileCondition(profiles, selectedProfile))
+  }
+
+  const handleSaveQueryButtonClick = () => {
+    let isConditionValid = true
+    for (let cond of selectedProfileObj.conditions) {
+      if (!cond.mdFieldKey || !cond.op) {
+        isConditionValid = false
+        break
+      }
+    }
+    if (!isConditionValid) {
+      setErrMessage(msg.T_InvalidQueryCondition)
+      return
+    }
+    setIsSaveQueryModalVisible(true)
+    setTimeout(() => modalInputRef.current.select(), 0)
+  }
+
+  const handleCancelSaveQuery = () => {
+    setIsSaveQueryModalVisible(false)
+    setProfileNameEditorValue(selectedProfileObj.name)
+  }
+
+  const handleSaveQuery = async () => {
+    const profileName = profileNameEditorValue.trim()
+    if (!profileName) {
+      setErrMessage(msg.T_InvalidProfileName)
+      return
+    }
+    setIsSaveQueryModalVisible(false)
+    const profileKey =
+      selectedProfileObj.key !== -1
+        ? selectedProfileObj.key
+        : new Date().getTime()
+    const newProfiles = updateProfile(profiles, selectedProfile, {
+      key: profileKey,
+      name: profileName,
+    })
+    if (newProfiles[newProfiles.length - 1].key !== -1) {
+      newProfiles.push(newQueryProfile())
+    }
+    setProfiles(newProfiles)
+    setSelectedProfile(profileKey)
+    await saveQueryProfiles(newProfiles.slice(0, newProfiles.length - 1))
+  }
+
+  const handleDeleteQueryProfile = async () => {
+    const newProfiles = deleteProfile(profiles, selectedProfile)
+    const newSelectProfile = newProfiles[0]
+    setProfiles(newProfiles)
+    setSelectedProfile(newSelectProfile.key)
+    setSelectedMDTemp(newSelectProfile.mdTemplate)
+    setProfileNameEditorValue(newSelectProfile.name)
+    await saveQueryProfiles(newProfiles.slice(0, newProfiles.length - 1))
   }
 
   return (
@@ -202,7 +297,7 @@ export default function(props) {
         <div className="m-c-queries">
           <span>{msg.L_SelectSavedQuery}</span>
           <Select
-            defaultValue={selectedProfile}
+            value={selectedProfile}
             className="m-queries"
             loading={isLoadingProfiles}
             onChange={handleProfileSelection}
@@ -217,13 +312,13 @@ export default function(props) {
         <Card
           type="inner"
           className="m-c-query"
-          title={valueByKey(profiles, selectedProfile).name}
+          title={selectedProfileObj.name}
         >
           <div className="m-c-query-conditions">
             <div className="m-c-metadata">
               <span>{msg.L_ChooseMetadata}</span>
               <Select
-                defaultValue={selectedMDTemp}
+                value={selectedMDTemp}
                 className="m-metadata"
                 loading={isLoadingMDTemplates}
                 onChange={handleMDTemplateSelection}
@@ -238,7 +333,7 @@ export default function(props) {
             <p>{msg.L_ConditionEditor}</p>
             <Divider className="m-dividen" />
             <div className="m-c-condition-editor">
-              {valueByKey(profiles, selectedProfile).conditions.map((cond) => (
+              {selectedProfileObj.conditions.map((cond) => (
                 <QueryConditionRow
                   key={cond.key}
                   mdTemplate={valueByKey(mdTemplates, selectedMDTemp)}
@@ -251,7 +346,39 @@ export default function(props) {
             </div>
           </div>
           <div className="m-c-query-actions">
-            <Button className="m-action-button">{msg.B_SaveQuery}</Button>
+            {selectedProfileObj.key !== -1 ? (
+              <Popconfirm
+                title={msg.T_ConfirmDeleteQueryProfile}
+                okText={msg.B_Confirm}
+                cancelText={msg.B_Cancel}
+                onConfirm={handleDeleteQueryProfile}
+              >
+                <Button className="m-action-button" type="danger" icon="delete">
+                  {msg.B_DeleteQuery}
+                </Button>
+              </Popconfirm>
+            ) : null}
+            <Button
+              className="m-action-button"
+              onClick={handleSaveQueryButtonClick}
+            >
+              {msg.B_SaveQuery}
+            </Button>
+            <Modal
+              title={msg.B_SaveQuery}
+              visible={isSaveQueryModalVisible}
+              onCancel={handleCancelSaveQuery}
+              onOk={handleSaveQuery}
+              okText={msg.B_Confirm}
+              cancelText={msg.B_Cancel}
+            >
+              <Input
+                size="large"
+                value={profileNameEditorValue}
+                ref={modalInputRef}
+                onChange={(e) => setProfileNameEditorValue(e.target.value)}
+              />
+            </Modal>
             <Button type="primary" className="m-action-button">
               {msg.B_RunQuery}
             </Button>

@@ -139,6 +139,10 @@ export async function getQueryProfiles() {
   })
 }
 
+export async function saveQueryProfiles(profiles) {
+  await setConfig({ profiles })
+}
+
 export async function getCurrentUser(context) {
   return await gqlQuery(
     gql`

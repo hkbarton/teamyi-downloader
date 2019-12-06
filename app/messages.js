@@ -28,4 +28,10 @@ export default {
   OP_Include: "包含",
   OP_NotInclude: "不包含",
   PH_InputValue: "请输入值",
+  B_DeleteQuery: "删除查询",
+  T_InvalidProfileName: "请输入一个有意义的查询名称",
+  T_InvalidQueryCondition: "查询条件无效，请设置正确的查询条件",
+  B_Confirm: "确定",
+  B_Cancel: "取消",
+  T_ConfirmDeleteQueryProfile: "确定要删除此查询吗？",
 }

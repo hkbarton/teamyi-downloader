@@ -55,9 +55,9 @@ export default function(props) {
     mdTemplate ? mdTemplate.fields : null,
     condition.mdFieldKey,
   )
+  const ops = opsByFieldType(currentField)
 
   const [selectedField, setSelectedField] = useState(condition.mdFieldKey)
-  const [ops, setOps] = useState(opsByFieldType(currentField))
   const [selectedOp, setSelectedOp] = useState(condition.op)
   const [value, setValue] = useState(condition.value)
 
@@ -67,7 +67,6 @@ export default function(props) {
     )
     const defaultOp = newOps[0].key
     setSelectedField(mdFieldKey)
-    setOps(newOps)
     setSelectedOp(defaultOp)
     setValue(null)
     onChange({ ...condition, mdFieldKey, op: defaultOp, value: null })
