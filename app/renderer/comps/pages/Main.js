@@ -6,7 +6,6 @@ import {
   Select,
   Button,
   Divider,
-  Empty,
   Modal,
   Input,
   Popconfirm,
@@ -19,6 +18,7 @@ import {
 } from "api"
 import msg from "messages"
 import QueryConditionRow from "renderer/comps/p/QueryConditionRow"
+import QueryResult from "renderer/comps/p/QueryResult"
 
 import "renderer/styles/Main.less"
 
@@ -196,6 +196,8 @@ export default function(props) {
     profileNameEditorValue,
     setProfileNameEditorValue,
   ] = useProfiles(props.userID, setErrMessage)
+  const [queryResult, setQueryResult] = useState([])
+  const [isLoadingQueryResult, setIsLoadingQueryResult] = useState(false)
   const selectedProfileObj = valueByKey(profiles, selectedProfile)
 
   const handleProfileSelection = (profileKey) => {
@@ -279,6 +281,15 @@ export default function(props) {
     setSelectedMDTemp(newSelectProfile.mdTemplate)
     setProfileNameEditorValue(newSelectProfile.name)
     await saveQueryProfiles(newProfiles.slice(0, newProfiles.length - 1))
+  }
+
+  const handleRunQuery = () => {
+    // TODO
+    setIsLoadingQueryResult(true)
+    setTimeout(() => {
+      setQueryResult([])
+      setIsLoadingQueryResult(false)
+    }, 1000)
   }
 
   return (
@@ -379,14 +390,18 @@ export default function(props) {
                 onChange={(e) => setProfileNameEditorValue(e.target.value)}
               />
             </Modal>
-            <Button type="primary" className="m-action-button">
+            <Button
+              type="primary"
+              className="m-action-button"
+              onClick={handleRunQuery}
+            >
               {msg.B_RunQuery}
             </Button>
           </div>
         </Card>
       </div>
       <div className="m-right">
-        <Empty />
+        <QueryResult data={queryResult} isLoadingData={isLoadingQueryResult} />
       </div>
     </div>
   )

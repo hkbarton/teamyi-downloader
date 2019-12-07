@@ -34,4 +34,8 @@ export default {
   B_Confirm: "确定",
   B_Cancel: "取消",
   T_ConfirmDeleteQueryProfile: "确定要删除此查询吗？",
+  TH_FileName: "文件名称",
+  TH_FilePath: "文件路径",
+  TH_FileSize: "文件大小",
+  TH_FileTS: "文件更新时间",
 }
