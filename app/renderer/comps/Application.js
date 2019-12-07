@@ -4,7 +4,7 @@ import errors from "errors"
 import ServerDiscovery from "renderer/comps/pages/ServerDiscovery"
 import Login from "renderer/comps/pages/Login"
 import Main from "renderer/comps/pages/Main"
-import LoadingIndicator from "renderer/comps/p/LoadingIndicator"
+import LoadingIndicator from "renderer/comps/LoadingIndicator"
 
 import "renderer/styles/Application.less"
 

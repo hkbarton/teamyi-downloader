@@ -17,8 +17,8 @@ import {
   saveQueryProfiles,
 } from "api"
 import msg from "messages"
-import QueryConditionRow from "renderer/comps/p/QueryConditionRow"
-import QueryResult from "renderer/comps/p/QueryResult"
+import QueryConditionRow from "renderer/comps/QueryConditionRow"
+import QueryResult from "renderer/comps/QueryResult"
 
 import "renderer/styles/Main.less"
 
