@@ -15,6 +15,7 @@ import {
   getMDTemplates,
   getQueryProfiles,
   saveQueryProfiles,
+  queryFiles,
 } from "api"
 import msg from "messages"
 import QueryConditionRow from "renderer/comps/QueryConditionRow"
@@ -284,13 +285,15 @@ export default function(props) {
     await saveQueryProfiles(newProfiles.slice(0, newProfiles.length - 1))
   }
 
-  const handleRunQuery = () => {
-    // TODO
+  const handleRunQuery = async () => {
     setIsLoadingQueryResult(true)
-    setTimeout(() => {
-      setQueryResult([])
-      setIsLoadingQueryResult(false)
-    }, 1000)
+    const [result, err] = apiResult(await queryFiles(selectedProfileObj))
+    setIsLoadingQueryResult(false)
+    if (err) {
+      setErrMessage(err.message)
+      return
+    }
+    setQueryResult(result)
   }
 
   return (

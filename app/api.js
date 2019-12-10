@@ -223,11 +223,10 @@ export async function getMDTemplates(context) {
 }
 
 export async function queryFiles(queryProfile, context) {
-  console.log(queryProfile)
-  const ent = await getConfig("primaryEnt")
+  const entKey = await getConfig("primaryEnt")
   const input = {
     dataSource: "METADATA",
-    dataSourceArgs: `"user_md_templates/${queryProfile.mdTemplate}"`,
+    dataSourceArgs: `"${queryProfile.mdTemplate}"`,
     type: "TABLE",
     fields: ["file.name", "file.size", "file.timestamp"],
     pageSize: 1000,
@@ -256,14 +255,23 @@ export async function queryFiles(queryProfile, context) {
   input.filter = filters.join(" AND ")
   const result = await gqlQuery(
     gql`
-    query{
-      dataViewPreviewData(entKey:${ent},input:${input},page:1) {
-        data,
-        total
+      query dataViewPreviewData($entKey: ID!, $input: DataViewPreviewInput!) {
+        dataViewPreviewData(entKey: $entKey, input: $input, page: 1) {
+          data
+        }
       }
-    }
     `,
-    { context },
+    {
+      fetchPolicy: "network-only",
+      variables: {
+        entKey,
+        input,
+      },
+      context,
+    },
   )
+  if (result.data && result.data.dataViewPreviewData) {
+    result.data = JSON.parse(result.data.dataViewPreviewData.data)
+  }
   return result
 }
