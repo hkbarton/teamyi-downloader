@@ -69,7 +69,13 @@ export default function(props) {
     setSelectedField(mdFieldKey)
     setSelectedOp(defaultOp)
     setValue(null)
-    onChange({ ...condition, mdFieldKey, op: defaultOp, value: null })
+    onChange({
+      ...condition,
+      mdFieldKey,
+      op: defaultOp,
+      valueType: valueByKey(mdTemplate.fields, mdFieldKey).type,
+      value: null,
+    })
   }
 
   const handleOpChange = (op) => {
@@ -78,6 +84,7 @@ export default function(props) {
       ...condition,
       mdFieldKey: selectedField,
       op,
+      valueType: currentField.type,
       value,
     })
   }
@@ -88,6 +95,7 @@ export default function(props) {
       ...condition,
       mdFieldKey: selectedField,
       op: selectedOp,
+      valueType: currentField.type,
       value: v,
     })
   }

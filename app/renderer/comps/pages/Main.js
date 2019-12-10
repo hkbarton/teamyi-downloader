@@ -114,6 +114,7 @@ function newCond() {
     key: new Date().getTime(),
     mdFieldKey: null,
     op: null,
+    valueType: "TEXT",
     value: null,
   }
 }

@@ -221,3 +221,49 @@ export async function getMDTemplates(context) {
     { context },
   )
 }
+
+export async function queryFiles(queryProfile, context) {
+  console.log(queryProfile)
+  const ent = await getConfig("primaryEnt")
+  const input = {
+    dataSource: "METADATA",
+    dataSourceArgs: `"user_md_templates/${queryProfile.mdTemplate}"`,
+    type: "TABLE",
+    fields: ["file.name", "file.size", "file.timestamp"],
+    pageSize: 1000,
+    sortBy: "",
+  }
+  let filters = []
+  const parseConditionValue = (cond) => {
+    switch (cond.valueType) {
+      case "TEXT":
+      case "SINGLE":
+        return `"${cond.value}"`
+      case "NUMBER":
+      case "DATE":
+      case "TIME":
+      case "DATETIME":
+        return `${cond.value}`
+      case "MULTI":
+        return `["${cond.value.join('","')}"]`
+      default:
+        return `"${cond.value}"`
+    }
+  }
+  for (let cond of queryProfile.conditions) {
+    filters.push(`${cond.mdFieldKey} ${cond.op} ${parseConditionValue(cond)}`)
+  }
+  input.filter = filters.join(" AND ")
+  const result = await gqlQuery(
+    gql`
+    query{
+      dataViewPreviewData(entKey:${ent},input:${input},page:1) {
+        data,
+        total
+      }
+    }
+    `,
+    { context },
+  )
+  return result
+}
