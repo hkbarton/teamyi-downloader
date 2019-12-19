@@ -38,4 +38,5 @@ export default {
   TH_FilePath: "文件路径",
   TH_FileSize: "文件大小",
   TH_FileTS: "文件更新时间",
+  L_RootFolder: "根目录",
 }

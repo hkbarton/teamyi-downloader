@@ -4,6 +4,7 @@ import msg from "messages"
 import moment from "moment"
 
 import FileIcon from "renderer/comps/FileIcon"
+import FolderIcon from "icons/file_folder.svg"
 
 function convertSize(bytes) {
   let units = ["B", "KB", "MB", "GB", "TB", "PB"]
@@ -20,16 +21,28 @@ const columns = [
     dataIndex: "file.name",
     key: "file.name",
     render: (name) => (
-      <div className="m-c-query-result-file-name">
+      <div className="m-c-query-result-file-icon-col">
         <FileIcon name={name} />
-        <span className="file-name">{name}</span>
+        <span className="col-content">{name}</span>
       </div>
     ),
   },
   {
     title: msg.TH_FilePath,
     dataIndex: "file.path",
-    key: "file.path",
+    render: (p) => {
+      let path = p.replace(/^home_\d+/, msg.L_RootFolder)
+      path =
+        path.length > 17
+          ? `...${path.substr(path.length - 17, path.length)}`
+          : path
+      return (
+        <div className="m-c-query-result-file-icon-col">
+          <FolderIcon width={28} height={28} />
+          <span className="col-content">{path}</span>
+        </div>
+      )
+    },
   },
   {
     title: msg.TH_FileSize,

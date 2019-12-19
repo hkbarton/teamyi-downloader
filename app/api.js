@@ -271,7 +271,37 @@ export async function queryFiles(queryProfile, context) {
     },
   )
   if (result.data && result.data.dataViewPreviewData) {
-    result.data = JSON.parse(result.data.dataViewPreviewData.data)
+    const files = JSON.parse(result.data.dataViewPreviewData.data)
+    const fileKeys = files.map((file) => file["file.key"])
+    const filePathQuery = await gqlQuery(
+      gql`
+        query filePaths($entKey: String!, $fileKeys: [String!]!) {
+          filePaths(entKey: $entKey, fileKeys: $fileKeys) {
+            key
+            path
+          }
+        }
+      `,
+      {
+        fetchPolicy: "network-only",
+        variables: {
+          entKey,
+          fileKeys,
+        },
+        context,
+      },
+    )
+    if (filePathQuery.data && filePathQuery.data.filePaths) {
+      const filePaths = filePathQuery.data.filePaths
+      const pathsByKey = {}
+      for (let filePath of filePaths) {
+        pathsByKey[filePath.key] = filePath.path
+      }
+      for (let file of files) {
+        file["file.path"] = pathsByKey[file["file.key"]]
+      }
+    }
+    result.data = files
   }
   return result
 }
