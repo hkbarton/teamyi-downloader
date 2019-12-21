@@ -3,8 +3,6 @@ import initNodeAPI from "main/node-api"
 
 let win
 
-initNodeAPI()
-
 function createMainWindow() {
   let winWidth = 1280
   let winHeight = 800
@@ -21,6 +19,8 @@ function createMainWindow() {
       nodeIntegration: true,
     },
   })
+
+  initNodeAPI(win)
 
   win.loadFile("dist/renderer/index.html")
 

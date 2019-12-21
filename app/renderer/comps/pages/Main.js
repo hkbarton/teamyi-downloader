@@ -405,7 +405,12 @@ export default function(props) {
         </Card>
       </div>
       <div className="m-right">
-        <QueryResult data={queryResult} isLoadingData={isLoadingQueryResult} />
+        <QueryResult
+          userID={props.userID}
+          errSetter={setErrMessage}
+          data={queryResult}
+          isLoadingData={isLoadingQueryResult}
+        />
       </div>
     </div>
   )

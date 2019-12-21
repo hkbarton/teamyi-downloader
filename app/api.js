@@ -7,6 +7,7 @@ import gql from "graphql-tag"
 import { getConfig, setConfig } from "config"
 import errors, { getError } from "errors"
 // electron or nodejs module, exclued in bundle if used in renderer
+import { app, dialog, remote } from "electron"
 import dgram from "dgram"
 import { Buffer } from "buffer"
 
@@ -31,10 +32,10 @@ const sessionLink = new ApolloLink((operation, forward) => {
 function createClient(server) {
   client = null
   const cache = new InMemoryCache()
-  const port = process.env.NODE_ENV === "development" ? 9000 : ""
+  const port = process.env.NODE_ENV === "development" ? ":9000" : ""
   const link = sessionLink.concat(
     new HttpLink({
-      uri: `${server}:${port}/graphql`,
+      uri: `${server}${port}/graphql`,
       fetch,
     }),
   )
@@ -130,6 +131,32 @@ export async function setServerAddress(protocol, server) {
 export async function resetServerAddress() {
   await setConfig({ server: null })
   client = null
+}
+
+export async function getSavingTargetPath() {
+  return execute(async () => {
+    let targetPath = await getConfig("targetPath")
+    if (!targetPath) {
+      const electronApp = app || remote.app
+      targetPath = electronApp.getPath("desktop")
+    }
+    return targetPath
+  })
+}
+
+export async function chooseSavingTargetPath() {
+  return execute(async () => {
+    let targetPath = await getConfig("targetPath")
+    const electronDialog = dialog || remote.dialog
+    const dialogResult = await electronDialog.showOpenDialog({
+      properties: ["openDirectory"],
+    })
+    if (!dialogResult.canceled && dialogResult.filePaths.length > 0) {
+      targetPath = dialogResult.filePaths[0]
+      await setConfig({ targetPath })
+    }
+    return targetPath
+  })
 }
 
 export async function getQueryProfiles() {

@@ -15,3 +15,31 @@ export async function login(user, pass) {
   }
   return [result, err]
 }
+
+export async function kickoffSavingProcess(
+  files,
+  targetPath,
+  progressCallback,
+) {
+  const [result, err] = await ipcRenderer.invoke(
+    "startSavingFiles",
+    files,
+    targetPath,
+  )
+  if (!err) {
+    /* eslint-disable no-unused-vars */
+    const handleProgress = (_ /* event */, progressMsg) => {
+      const { progress, message } = progressMsg
+      if (progress === "done" || progress === "error") {
+        ipcRenderer.removeListener("savingFileProgress", handleProgress)
+      }
+      progressCallback(progress, message)
+    }
+    ipcRenderer.on("savingFileProgress", handleProgress)
+  }
+  return [result, err]
+}
+
+export async function cancelOngoingSaving() {
+  await ipcRenderer.invoke("cancelOngoingSaving")
+}
