@@ -9,13 +9,13 @@
   }
 
   .m-left {
-    width: 40%;
+    width: 37%;
     padding: 20px;
     overflow-y:auto;
   }
 
   .m-right {
-    flex-grow: 1;
+    width: 63%;
     justify-content: flex-start;
     padding-top:20px;
     padding-bottom: 20px;
@@ -133,10 +133,11 @@
 }
 
 .m-query-result {
-  flex-grow: 1;
+  height: calc(100% - 70px);
   margin-bottom: 10px;
   background-color: white;
   border-radius: 4px;
+  overflow-y: auto;
 
   .ant-table-placeholder {
     border-bottom: none !important;
