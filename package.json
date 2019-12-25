@@ -8,13 +8,13 @@
     "lint": "./node_modules/.bin/prettier --write \"app/**/*.js\" && ./node_modules/.bin/eslint_d --fix app",
     "transpile": "./node_modules/.bin/babel -d lib app",
     "cleanup": "rm -rf lib && rm -rf dist",
-    "build:main:dev": "NODE_ENV=production ./node_modules/.bin/webpack --config build/webpack.config.main.dev.js",
-    "build:main:prod": "NODE_ENV=production ./node_modules/.bin/webpack --config build/webpack.config.main.prod.js",
-    "build:renderer:dev": "NODE_ENV=production ./node_modules/.bin/webpack --config build/webpack.config.renderer.dev.js",
-    "build:renderer:prod": "NODE_ENV=production ./node_modules/.bin/webpack --config build/webpack.config.renderer.prod.js",
+    "build:main:dev": "set NODE_ENV=development && ./node_modules/.bin/webpack --config build/webpack.config.main.dev.js",
+    "build:main:prod": "set NODE_ENV=production && ./node_modules/.bin/webpack --config build/webpack.config.main.prod.js",
+    "build:renderer:dev": "set NODE_ENV=development && ./node_modules/.bin/webpack --config build/webpack.config.renderer.dev.js",
+    "build:renderer:prod": "set NODE_ENV=production && ./node_modules/.bin/webpack --config build/webpack.config.renderer.prod.js",
     "dev": "yarn run cleanup && yarn run build:main:dev && yarn run build:renderer:dev",
     "prod": "yarn run cleanup && yarn run build:main:prod && yarn run build:renderer:prod",
-    "build:keytar": "./node_modules/.bin/electron-rebuild -w keytar"
+    "build:native": "./node_modules/.bin/electron-rebuild"
   },
   "license": "UNLICENSED",
   "private": true,

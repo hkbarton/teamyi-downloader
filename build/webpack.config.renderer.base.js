@@ -61,7 +61,7 @@ module.exports = {
         ],
       },
       {
-        test: /icons\/.+\.svg$/i,
+        test: /\.svg$/i,
         use: [
           {
             loader: "babel-loader",
