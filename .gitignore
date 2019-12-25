@@ -4,3 +4,6 @@ lib
 **/.DS_Store
 .vs/
 .yarn/
+build/crt
+build/key
+release

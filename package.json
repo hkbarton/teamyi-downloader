@@ -1,6 +1,6 @@
 {
   "name": "@teamyi/downloader",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "dist/main/main.bundle.js",
   "scripts": {
     "start": "yarn dev && electron .",
@@ -14,7 +14,12 @@
     "build:renderer:prod": "set NODE_ENV=production && ./node_modules/.bin/webpack --config build/webpack.config.renderer.prod.js",
     "dev": "yarn run cleanup && yarn run build:main:dev && yarn run build:renderer:dev",
     "prod": "yarn run cleanup && yarn run build:main:prod && yarn run build:renderer:prod",
-    "build:native": "./node_modules/.bin/electron-rebuild"
+    "build:native": "./node_modules/.bin/electron-rebuild",
+    "postinstall": "electron-builder install-app-deps",
+    "release:prep": "set NODE_ENV=production && yarn prod && rm -rf release",
+    "release:pack": "yarn release:prep && electron-builder --dir",
+    "release:win": "yarn release:prep && electron-builder --win",
+    "release:mac": "yarn release:prep && electron-builder --mac"
   },
   "license": "UNLICENSED",
   "private": true,
@@ -22,8 +27,14 @@
     "appId": "com.teamyi.downloader",
     "productName": "数蚁文件下载工具",
     "files": [
-      "build"
-    ]
+      "dist"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "nsis": {
+      "createDesktopShortcut": "always"
+    }
   },
   "husky": {
     "hooks": {
