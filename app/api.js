@@ -285,6 +285,30 @@ export async function getMDTemplates(context) {
   return mdResults
 }
 
+async function getFilePaths(entKey, fileKeys) {
+  const filePathQuery = await gqlQuery(
+    gql`
+      query filePaths($entKey: String!, $fileKeys: [String!]!) {
+        filePaths(entKey: $entKey, fileKeys: $fileKeys) {
+          key
+          path
+        }
+      }
+    `,
+    {
+      fetchPolicy: "network-only",
+      variables: {
+        entKey,
+        fileKeys,
+      },
+    },
+  )
+  if (filePathQuery.data && filePathQuery.data.filePaths) {
+    return filePathQuery.data.filePaths
+  }
+  return []
+}
+
 export async function queryFiles(queryProfile, context) {
   const entKey = await getConfig("primaryEnt")
   const queryAllFiles = queryProfile.mdTemplate === "files"
@@ -293,7 +317,7 @@ export async function queryFiles(queryProfile, context) {
     dataSourceArgs: queryAllFiles ? null : `"${queryProfile.mdTemplate}"`,
     type: "TABLE",
     fields: ["file.name", "file.size", "file.timestamp"],
-    pageSize: 1000,
+    pageSize: 1000000,
     sortBy: "",
   }
   let filters = []
@@ -337,34 +361,32 @@ export async function queryFiles(queryProfile, context) {
   if (result.data && result.data.dataViewPreviewData) {
     const files = JSON.parse(result.data.dataViewPreviewData.data)
     const fileKeys = files.map((file) => file["file.key"])
-    const filePathQuery = await gqlQuery(
-      gql`
-        query filePaths($entKey: String!, $fileKeys: [String!]!) {
-          filePaths(entKey: $entKey, fileKeys: $fileKeys) {
-            key
-            path
-          }
-        }
-      `,
-      {
-        fetchPolicy: "network-only",
-        variables: {
-          entKey,
-          fileKeys,
-        },
-        context,
-      },
-    )
-    if (filePathQuery.data && filePathQuery.data.filePaths) {
-      const filePaths = filePathQuery.data.filePaths
-      const pathsByKey = {}
-      for (let filePath of filePaths) {
-        pathsByKey[filePath.key] = filePath.path
-      }
-      for (let file of files) {
-        file["file.path"] = pathsByKey[file["file.key"]]
+    const filePathBatchSize = 1000
+    const fileKeyBatches = []
+    let batch = []
+    for (let i = 0; i < fileKeys.length; i++) {
+      batch.push(fileKeys[i])
+      if ((i + 1) % filePathBatchSize === 0) {
+        fileKeyBatches.push(batch)
+        batch = []
       }
     }
+    if (batch.length > 0) {
+      fileKeyBatches.push(batch)
+    }
+
+    let filePaths = []
+    for (let fileKeyBatch of fileKeyBatches) {
+      filePaths = filePaths.concat(await getFilePaths(entKey, fileKeyBatch))
+    }
+    const pathsByKey = {}
+    for (let filePath of filePaths) {
+      pathsByKey[filePath.key] = filePath.path
+    }
+    for (let file of files) {
+      file["file.path"] = pathsByKey[file["file.key"]]
+    }
+
     result.data = files.filter((f) => !!f["file.path"])
   }
   return result
