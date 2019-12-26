@@ -6,6 +6,7 @@ import { HttpLink } from "apollo-link-http"
 import gql from "graphql-tag"
 import { getConfig, setConfig } from "config"
 import errors, { getError } from "errors"
+import msg from "messages"
 // electron or nodejs module, exclued in bundle if used in renderer
 import { app, dialog, remote } from "electron"
 import dgram from "dgram"
@@ -230,7 +231,7 @@ export async function login(user, pass, context) {
 
 export async function getMDTemplates(context) {
   const ent = await getConfig("primaryEnt")
-  return await gqlQuery(
+  const mdResults = await gqlQuery(
     gql`
     query {
       allMDTemplates(entKey:"${ent}"){
@@ -247,13 +248,49 @@ export async function getMDTemplates(context) {
     `,
     { context },
   )
+  // hydrate all file query templates
+  if (!mdResults.err && mdResults.data && mdResults.data.allMDTemplates) {
+    const fileQueryTemplate = {
+      key: "files",
+      name: msg.D_AllFile,
+      fields: [
+        {
+          key: "file.size",
+          name: msg.D_FileFieldSize,
+          type: "NUMBER",
+          typeData: null,
+        },
+        {
+          key: "file.name",
+          name: msg.D_FileFieldName,
+          type: "TEXT",
+          typeData: null,
+        },
+        {
+          key: "file.uploadedBy",
+          name: msg.D_FileFieldUploadedby,
+          type: "TEXT",
+          typeData: null,
+        },
+        {
+          key: "file.user",
+          name: msg.D_FileFieldUser,
+          type: "TEXT",
+          typeData: null,
+        },
+      ],
+    }
+    mdResults.data.allMDTemplates.push(fileQueryTemplate)
+  }
+  return mdResults
 }
 
 export async function queryFiles(queryProfile, context) {
   const entKey = await getConfig("primaryEnt")
+  const queryAllFiles = queryProfile.mdTemplate === "files"
   const input = {
-    dataSource: "METADATA",
-    dataSourceArgs: `"${queryProfile.mdTemplate}"`,
+    dataSource: queryAllFiles ? "FILE" : "METADATA",
+    dataSourceArgs: queryAllFiles ? null : `"${queryProfile.mdTemplate}"`,
     type: "TABLE",
     fields: ["file.name", "file.size", "file.timestamp"],
     pageSize: 1000,

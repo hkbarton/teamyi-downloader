@@ -53,6 +53,11 @@ export default {
   L_FailedToCreateSavingTargetPath: "保存文件失败",
   L_ProgressCreateFolder: "创建目录结构...",
   L_FailedSavingFile: "保存文件失败，请关闭窗口并重试",
+  D_AllFile: "所有文件",
+  D_FileFieldSize: "文件大小",
+  D_FileFieldName: "文件名",
+  D_FileFieldUploadedby: "文件创建者",
+  D_FileFieldUser: "文件更新者",
   targetFolder: (id) => `数蚁存档${id}`,
   progressSavingFile: (fileName) => `保存文件${fileName}...`,
 }
