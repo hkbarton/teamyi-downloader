@@ -361,7 +361,7 @@ export async function queryFiles(queryProfile, context) {
   if (result.data && result.data.dataViewPreviewData) {
     const files = JSON.parse(result.data.dataViewPreviewData.data)
     const fileKeys = files.map((file) => file["file.key"])
-    const filePathBatchSize = 1000
+    const filePathBatchSize = 300
     const fileKeyBatches = []
     let batch = []
     for (let i = 0; i < fileKeys.length; i++) {
