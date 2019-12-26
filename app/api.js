@@ -365,7 +365,7 @@ export async function queryFiles(queryProfile, context) {
         file["file.path"] = pathsByKey[file["file.key"]]
       }
     }
-    result.data = files
+    result.data = files.filter((f) => !!f["file.path"])
   }
   return result
 }
