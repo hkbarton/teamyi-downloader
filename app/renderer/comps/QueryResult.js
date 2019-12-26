@@ -145,7 +145,8 @@ export default function(props) {
       <Table
         className="m-query-result"
         rowKey="file.key"
-        dataSource={data}
+        /* TODO: temporary display top 1000, should add pagination later */
+        dataSource={data.slice(0, 1000)}
         columns={columns}
         pagination={false}
         loading={isLoadingData}
