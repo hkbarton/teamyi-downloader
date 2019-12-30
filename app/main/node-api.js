@@ -64,33 +64,66 @@ export async function loginWithSavedCredential() {
 
 let isSavingCanceled = false
 
-async function savingFiles(files, savingPath, reportProgress) {
-  reportProgress(0, msg.L_ProgressCreateFolder)
-  const paths = files.map((file) => file["file.path"])
-  // figure out whether we need to create home forler(home_[user id]) or not
-  let ignoreHomePath = true
-  let homePath
-  for (let p of paths) {
-    const home = p.split("/")[0]
-    if (!homePath) {
-      homePath = home
+function trimCommonFolderOfPaths(oriPaths) {
+  // normalize input
+  const paths = oriPaths.map((path) =>
+    path[path.length - 1] !== "/" ? `${path}/` : path,
+  )
+  let i = 0
+  let endOfSearch = false
+  const commonPath = [null]
+  while (!endOfSearch) {
+    for (let j = 0; j < paths.length; j++) {
+      const p = paths[j]
+      if (i > p.length - 1) {
+        endOfSearch = true
+        if (j > 0) {
+          commonPath.pop()
+        }
+        break
+      }
+      if (commonPath[commonPath.length - 1] === null) {
+        commonPath[commonPath.length - 1] = p[i]
+      } else if (commonPath[commonPath.length - 1] !== p[i]) {
+        commonPath.pop()
+        endOfSearch = true
+        break
+      }
     }
-    if (home !== homePath) {
-      ignoreHomePath = false
+    if (!endOfSearch) {
+      i++
+      commonPath.push(null)
     }
   }
+  if (commonPath[commonPath.length - 1] !== "/") {
+    /* eslint-disable no-empty */
+    while (commonPath.pop() !== "/") {}
+  }
+  const commonPathParts = commonPath.join("").split("/")
+  if (!commonPathParts[commonPathParts.length - 1]) {
+    commonPathParts.pop()
+  }
+  // pop one more because we do want to keep at leat 1 same parent
+  commonPathParts.pop()
+  const commonPathStr = commonPathParts.join("/")
+  return paths.map((path) => path.replace(commonPathStr, ""))
+}
+
+async function savingFiles(files, savingPath, reportProgress) {
+  reportProgress(0, msg.L_ProgressCreateFolder)
+  const oriPaths = files.map((file) => file["file.path"])
+  console.log(oriPaths)
+  const paths = trimCommonFolderOfPaths(oriPaths)
+  console.log(paths)
   try {
     // create paths
-    for (let file of files) {
+    for (let i = 0; i < files.length; i++) {
       if (isSavingCanceled) {
         return
       }
-      const p = file["file.path"]
-      const pathParts = p.split("/")
-      if (ignoreHomePath) {
-        pathParts.shift()
-      }
-      const pathToCreate = path.join(savingPath, pathParts.join("/"))
+      const file = files[i]
+      const p = paths[i]
+      const pathToCreate = path.join(savingPath, p)
       file.absPath = path.join(pathToCreate, file["file.name"])
       await fs.promises.mkdir(pathToCreate, { recursive: true })
     }
